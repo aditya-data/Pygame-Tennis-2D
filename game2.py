@@ -31,9 +31,9 @@ class GameManager:
         self.create_ground()
         self.court = Court(COURTWIDTH, COURTHEIGHT, [COURT_BLUE_LIGHT, COURT_BLUE_DARK, WHITE])
         self.net = Net(height=NET_HEIGHT, surface=self.court.court_surface, colors=[GRAY, DARK_GRAY])
-        # self.PlayerA = Player()
-        # self.PlayerB = Player()
-        self.Ball = Ball(r=10, x=10, y= 10, x_v=5, y_v=20, surface=self.court.court)
+        self.PlayerA = Player(side="left", mode="player", width=100, height=20, x_v=0, y_v=0, surface=self.court.court)
+        self.PlayerB = Player(side="right", mode="opponent", width=100, height=20, x_v=0, y_v=0, surface=self.court.court)
+        self.Ball = Ball(r=10, x=10, y= 10, x_v=6, y_v=12, surface=self.court.court)
         # run game loop
         self.run()
 
@@ -56,7 +56,25 @@ class GameManager:
             self.Ball.move()
             self.Ball.boundary_collision()
 
+            # mid line of court 352.5
+
+            if self.Ball.pos[1] > 352.5:
+                self.PlayerA.move_towards_ball(self.Ball)
+                self.PlayerB.move_towards_centre()
+                if self.Ball.pos[1] > 640.5:
+                    self.PlayerA.check_ball_collision(self.Ball)
+            else: #Ball.pos[1] < 352.5:
+                self.PlayerB.move_towards_ball(self.Ball)
+                self.PlayerA.move_towards_centre()
+                if self.Ball.pos[1] < 80.5:
+                    self.PlayerB.check_ball_collision(self.Ball)
+            self.PlayerA.render()
+            self.PlayerB.render()
+
+            
+            
             # self.court.court_surface.blit(self.court.court, (0, 0))
+            # self.court.court.blit(self.court.court_surface, (0, 0))
             self.screen.blit(self.court.court, (200, 0))
             pygame.display.flip()
             self.clock.tick(60)

@@ -43,14 +43,16 @@ class Ball:
 
 class Player:
 
-    def __init__(self, side, width, height, mode, x_v, y_v):
+    def __init__(self, side, width, height, mode, x_v, y_v, surface):
         self.side = side
         self.mode = mode #player and opponent
-        self.default_reset()
+        self.pos = [0, 0]
+        self.surface = surface
         self.width = width
         self.height = height
         self.velocity = [x_v, y_v]
-        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], self.width, self.height)
+        self.default_reset()
         self.render()
 
     def move_towards_ball(self, ball):
@@ -74,8 +76,8 @@ class Player:
         self.move()
 
     def move(self):
-        self.pos[0] += self.vel[0]
-        self.pos[1] += self.vel[1]
+        self.pos[0] += self.velocity[0]
+        self.pos[1] += self.velocity[1]
         self.rect.center = self.pos  # Sync rect with the updated position
         self.render()
 
@@ -83,25 +85,31 @@ class Player:
     def default_reset(self):
         if self.mode == "player":
             if self.side == "left":
-                self.x = 10
-                self.y = 670
+                self.pos[0] = 10
+                self.pos[1] = 670
             else: #self.side == right
-                self.x = 310
-                self.y = 670
+                self.pos[0] = 310
+                self.pos[1] = 670
         elif self.mode == "opponent":
             if self.side == "left":
-                self.x = 310
-                self.y = 10
+                self.pos[0] = 310
+                self.pos[1] = 5
             else: #self.side == right
-                self.x = 10
-                self.y = 10
+                self.pos[0] = 10
+                self.pos[1] = 5
+        self.render()
     
     def render(self):
         pygame.draw.ellipse(surface=self.surface, color=YELLOW, rect=self.rect)
 
 
-    def check_ball_collision(self):
-        pass
+    def check_ball_collision(self, ball):
+        # print(self.pos[0], ball.pos[0])
+        if (ball.pos[0] <= self.pos[0] + self.width) and (ball.pos[0] >= self.pos[0]):
+            if (ball.pos[1] <= self.rect.y):
+                ball.vel[1] *= -1
+                # ball.vel[0] *= -1
+
 
     def return_to_neutral(self):
         pass
