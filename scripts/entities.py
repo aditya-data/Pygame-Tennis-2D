@@ -14,6 +14,7 @@ class Ball:
         self.bounce_count = 0 #initialize it with 0
         self.surface = surface # default surface court
         self.rect = pygame.Rect(self.pos[0]-self.radius, self.pos[1]- self.radius, self.radius*2, self.radius*2)
+        self.last_hit_time = 0  # Initialize the cooldown timer
         self.render() #visualising on the surface
 
     def render(self):
@@ -76,11 +77,10 @@ class Player:
         else:
             self.side = "left"
 
-    def move_towards_centre(self):
-        target_x = 200
+    def move_towards(self, dx):
         # target_y = 670 if self.mode == "player" else 35
 
-        dx = target_x - self.pos[0]
+        dx = self.pos[0] + dx
         # dy = target_y - self.pos[1]
 
         self.velocity = [dx/20, 0]
@@ -114,26 +114,45 @@ class Player:
         pygame.draw.ellipse(surface=self.surface, color=YELLOW, rect=self.rect)
 
 
-    def check_ball_collision(self, ball):
-        if self.rect.colliderect(ball):
-            # Reverse the vertical direction (bounce back)
-            ball.vel[1] *= -1
-
-            # Randomize horizontal velocity
-            horizontal_randomness = random.uniform(2.5, 3.5)  # Adjust speed variation range
-
-            # Avoid hitting out of bounds
-            if ball.pos[0] >= 310:  # Ball near right boundary
-                ball.vel[0] = -horizontal_randomness  # Push left
-            elif ball.pos[0] <= 90:  # Ball near left boundary
-                ball.vel[0] = horizontal_randomness  # Push right
+    def check_ball_collision(self, ball, opponent):
+        # Predict ball's next position based on its velocity
+        current_time = pygame.time.get_ticks()
+        next_ball_x = ball.pos[0] + ball.vel[0]
+        next_ball_y = ball.pos[1] + ball.vel[1]
+        
+        # Create a line representing the ball's movement (path) linear interpolation
+        ball_path = pygame.Rect(
+            min(ball.pos[0], next_ball_x),  # Left edge of the path
+            min(ball.pos[1], next_ball_y),  # Top edge of the path
+            abs(ball.vel[0]) + 20,  # Width of the path
+            abs(ball.vel[1]) + 20  # Height of the path
+        )
+        
+        # Check if the player's rectangle intersects with the ball's path
+        if self.rect.colliderect(ball_path) and current_time - ball.last_hit_time > 100:
+            ball.last_hit_time = current_time  # Update the hit time (its the cooldown mechanism)
+            ball.vel[1] *= -random.uniform(0.8, 1.1)  # Reverse Y-velocity
+            
+            # Boundary avoidance logic
+            court_width = 400  # Example court width
+            safe_zone_margin = 90  # Margin to avoid the boundary
+            horizontal_randomness = random.uniform(1, 5)  # Randomize horizontal speed
+            
+            if ball.pos[0] >= court_width - safe_zone_margin:  # Near right boundary
+                ball.vel[0] = -horizontal_randomness  # Redirect left
+            elif ball.pos[0] <= safe_zone_margin:  # Near left boundary
+                ball.vel[0] = horizontal_randomness  # Redirect right
             else:
-                # Randomize direction when near the center
-                ball.vel[0] = horizontal_randomness * random.choice([-1, 1])
+                # Target weak area of the opponent
+                if opponent.pos[0] > court_width / 2:  # Opponent on the right side
+                    ball.vel[0] = -horizontal_randomness  # Aim left
+                else:  # Opponent on the left side
+                    ball.vel[0] = horizontal_randomness  # Aim right
+            
+            if abs(ball.vel[0]) < 0.1 or abs(ball.vel[1]) < 0.1:
+                print("Ball velocity too low:", ball.vel)
 
-            # Optional: Add slight randomness to vertical velocity
-            ball.vel[1] *= random.uniform(0.9, 1.2)
-
-
-    def return_to_neutral(self):
-        pass
+            # Ensure ball velocity doesn't stagnate
+            min_speed = 1.5  # Minimum allowed speed
+            # ball.vel[0] = max(min_speed, abs(ball.vel[0])) * (1 if ball.vel[0] > 0 else -1)
+            ball.vel[1] = max(min_speed, abs(ball.vel[1])) * (1 if ball.vel[1] > 0 else -1)

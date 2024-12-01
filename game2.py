@@ -49,10 +49,13 @@ class GameManager:
     def run(self):
         while True:
             # Event handling
+            keys = pygame.key.get_pressed() #capturing key presses
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+
+                    
             self.court.court.blit(self.court.court_surface, (0, 0))
             self.PlayerA.render()
             self.PlayerB.render()
@@ -65,39 +68,37 @@ class GameManager:
                 if self.server == self.PlayerA:
                     if self.PlayerA.side == "left":
                         self.Ball.reset_pos(30, 620)
-                        self.Ball.vel = [3, 18]
+                        self.Ball.vel = [3, 15]
                     elif self.PlayerA.side == "right":
                         self.Ball.reset_pos(350, 620)
-                        self.Ball.vel = [-3, 18]
+                        self.Ball.vel = [-3, 15]
                 else:
                     if self.PlayerB.side == "left":
                         self.Ball.reset_pos(360, 50)
-                        self.Ball.vel = [-5, -18]
+                        self.Ball.vel = [-5, -15]
                     elif self.PlayerB.side == "right":
                         self.Ball.reset_pos(25, 50)
-                        self.Ball.vel = [5, -18]
+                        self.Ball.vel = [5, -15]
                 self.Ball.move()
                 self.game_state = "play"
             elif self.game_state == "play":
                 #### game play logic
                 self.Ball.move()
+                
                 if self.Ball.boundary_collision() == "continue":
                     if self.Ball.pos[1] > 352.5:
-                        self.PlayerA.move_towards_ball(self.Ball)
+                        # self.PlayerA.move_towards_ball(self.Ball)
                         # self.PlayerB.move_towards_centre()
+                        self.PlayerA.move_towards_ball(self.Ball)
                         if self.Ball.pos[1] > 640:
-                            self.PlayerA.check_ball_collision(self.Ball)
-                            # print("Position of Player A ", self.PlayerA.rect)
-                            # print("Position of Ball ", self.Ball.rect)
-                            # print("Position of Player B ", self.PlayerB.rect)
+                            self.PlayerA.check_ball_collision(self.Ball, self.PlayerB)
 
                     else: #Ball.pos[1] < 352.5:  
                         self.PlayerB.move_towards_ball(self.Ball)
-                        # self.PlayerA.move_towards_centre()
-                        if self.Ball.pos[1] < 35:
-                            self.PlayerB.check_ball_collision(self.Ball)
+                        if self.Ball.pos[1] < 40:
+                            self.PlayerB.check_ball_collision(self.Ball, self.PlayerA)
                 else:
-                    print("Yeh ")
+                    # print("Yeh ")
                     self.PlayerA.switch_side()
                     self.PlayerB.switch_side()
                     self.PlayerA.default_reset()
@@ -110,10 +111,10 @@ class GameManager:
                 # declare winner and scoreboard highlight
                 pass
 
-            
+            # print(self.Ball.rect)
             self.screen.blit(self.court.court, (200, 0))
             pygame.display.flip()
-            self.clock.tick(10)
+            self.clock.tick(60)
 
     def update(self):
         pass
